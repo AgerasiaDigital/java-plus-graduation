@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: gateway-server
+  config:
+    import: "optional:configserver:"
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: main-service-public
+          uri: http://localhost:${wiremock.server.port:8089}
+          predicates:
+            - Path=/events/**, /categories/**, /compilations/**
+        - id: main-service-private
+          uri: http://localhost:${wiremock.server.port:8089}
+          predicates:
+            - Path=/users/**
+        - id: main-service-admin
+          uri: http://localhost:${wiremock.server.port:8089}
+          predicates:
+            - Path=/admin/**
+server:
+  port: 0
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false

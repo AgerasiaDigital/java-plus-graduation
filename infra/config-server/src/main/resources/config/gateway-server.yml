@@ -1,0 +1,24 @@
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: main-service-public
+          uri: lb://main-service
+          predicates:
+            - Path=/events/**, /categories/**, /compilations/**
+        - id: main-service-private
+          uri: lb://main-service
+          predicates:
+            - Path=/users/**
+        - id: main-service-admin
+          uri: lb://main-service
+          predicates:
+            - Path=/admin/**
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
