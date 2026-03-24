@@ -6,14 +6,19 @@ spring:
     password: ewmpass
     hikari:
       initialization-fail-timeout: -1
+      connection-timeout: 3000
   jpa:
     hibernate:
       ddl-auto: none
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         temp:
           use_jdbc_metadata_defaults: false
+  sql:
+    init:
+      mode: never
 logging:
   level:
     root: INFO
