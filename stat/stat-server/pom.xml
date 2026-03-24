@@ -74,7 +74,7 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>stat-server</finalName>
+        <finalName>stats-server</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
