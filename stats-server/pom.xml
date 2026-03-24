@@ -98,7 +98,7 @@
                             <version>1.18.38</version>
                         </path>
                     </annotationProcessorPaths>
-                    <generatedSourcesDirectory>../target/generated-sources/annotations</generatedSourcesDirectory>
+                    <generatedSourcesDirectory>../stat/target/generated-sources/annotations</generatedSourcesDirectory>
                 </configuration>
             </plugin>
         </plugins>
