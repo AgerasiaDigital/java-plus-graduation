@@ -18,20 +18,28 @@ import java.util.List;
 @Slf4j
 @Component
 public class StatClientImpl implements StatClient {
-    private final RestClient restClient;
+    private final String baseUrl;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public StatClientImpl(String statUrl) {
+        this.baseUrl = statUrl;
         log.info("Stat-client использует url: {}", statUrl);
-        restClient = RestClient.builder()
-                .baseUrl(statUrl)
+    }
+
+    protected String resolveBaseUrl() {
+        return baseUrl;
+    }
+
+    private RestClient buildRestClient() {
+        return RestClient.builder()
+                .baseUrl(resolveBaseUrl())
                 .build();
     }
 
     @Override
     public void hit(EndpointHitDto endpointHitDto) {
         try {
-            restClient.post()
+            buildRestClient().post()
                     .uri("/hit")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(endpointHitDto)
@@ -49,7 +57,7 @@ public class StatClientImpl implements StatClient {
         log.debug("statsParamDto: {}", statsParamDto);
 
         try {
-            List<ViewStatsDto> stats = restClient.get()
+            List<ViewStatsDto> stats = buildRestClient().get()
                     .uri(uriBuilder -> {
                         String startEncoded = URLEncoder.encode(
                                 statsParamDto.getStart().format(formatter),
