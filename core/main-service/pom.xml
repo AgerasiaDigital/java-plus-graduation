@@ -86,11 +86,20 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>${project.basedir}/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/main/resources</directory>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.3.0</version>
+                <configuration>
+                    <mainClass>ru.practicum.ewm.MainApplication</mainClass>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
