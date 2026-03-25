@@ -1,6 +1,8 @@
 package ru.practicum.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
@@ -15,18 +17,28 @@ import java.util.Collections;
 import java.util.List;
 
 @Slf4j
-public class StatClientImpl implements StatClient {
+public class StatClientDiscoveryImpl implements StatClient {
     private final RestClient.Builder restClientBuilder = RestClient.builder();
-    private final String staticUrl;
+    private final DiscoveryClient discoveryClient;
+    private final String statsServiceId;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public StatClientImpl(String statUrl) {
-        log.info("Stat-client использует url: {}", statUrl);
-        this.staticUrl = statUrl;
+    public StatClientDiscoveryImpl(DiscoveryClient discoveryClient, String statsServiceId) {
+        this.discoveryClient = discoveryClient;
+        this.statsServiceId = statsServiceId;
+        log.info("Stat-client использует DiscoveryClient для сервиса: {}", statsServiceId);
+    }
+
+    private String resolveStatUrl() {
+        List<ServiceInstance> instances = discoveryClient.getInstances(statsServiceId);
+        if (instances == null || instances.isEmpty()) {
+            throw new IllegalStateException("Не найдено зарегистрированных инстансов сервиса " + statsServiceId);
+        }
+        return instances.getFirst().getUri().toString();
     }
 
     private RestClient restClient() {
-        return restClientBuilder.baseUrl(staticUrl).build();
+        return restClientBuilder.baseUrl(resolveStatUrl()).build();
     }
 
     @Override
@@ -92,3 +104,4 @@ public class StatClientImpl implements StatClient {
         }
     }
 }
+
