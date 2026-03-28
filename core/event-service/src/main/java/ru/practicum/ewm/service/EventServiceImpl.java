@@ -12,6 +12,7 @@ import ru.practicum.dto.StatsParamDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.ewm.client.CategoryClient;
 import ru.practicum.ewm.client.UserClient;
+import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.dto.event.EventAdminFilter;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventInitiatorIdFilter;
@@ -20,6 +21,7 @@ import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.dto.event.PageRequestDto;
 import ru.practicum.ewm.dto.event.UpdateEventRequest;
+import ru.practicum.ewm.dto.user.UserDto;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -34,7 +36,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
