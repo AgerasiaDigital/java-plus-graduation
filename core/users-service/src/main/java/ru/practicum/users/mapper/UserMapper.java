@@ -2,9 +2,9 @@ package ru.practicum.users.mapper;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import ru.practicum.ewm.dto.user.NewUserRequest;
-import ru.practicum.ewm.dto.user.UserDto;
-import ru.practicum.ewm.model.user.User;
+import ru.practicum.users.dto.user.NewUserRequest;
+import ru.practicum.users.dto.user.UserDto;
+import ru.practicum.users.model.user.User;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class UserMapper {
