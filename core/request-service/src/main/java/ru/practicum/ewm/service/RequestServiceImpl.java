@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.client.EventClient;
+import ru.practicum.ewm.client.UserClient;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.dto.event.EventRequestStatusUpdateResult;
@@ -16,7 +17,6 @@ import ru.practicum.ewm.model.request.Request;
 import ru.practicum.ewm.model.request.RequestStatus;
 import ru.practicum.ewm.repository.RequestRepository;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,11 +28,13 @@ import java.util.stream.Collectors;
 public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final EventClient eventClient;
+    private final UserClient userClient;
 
     @Override
     @Transactional(readOnly = true)
     public List<ParticipationRequestDto> getUserRequests(Long userId) {
         log.debug("Get user requests, userId={}", userId);
+        ensureUserExists(userId);
         return requestRepository.findByRequesterId(userId).stream()
                 .map(RequestMapper::toDto)
                 .collect(Collectors.toList());
@@ -42,22 +44,18 @@ public class RequestServiceImpl implements RequestService {
     public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
         log.debug("Add participation request, userId={}, eventId={}", userId, eventId);
 
+        ensureUserExists(userId);
+
         // Check if request already exists
         if (requestRepository.existsByEventIdAndRequesterId(eventId, userId)) {
             throw new ConflictException("Request already exists");
         }
 
         // Get event details
-        EventFullDto event;
-        try {
-            event = eventClient.getEvent(eventId);
-        } catch (Exception e) {
-            throw new NotFoundException("Event not found");
-        }
+        EventFullDto event = getPublishedEventOrThrow(eventId);
 
-        // Check if event is published
-        if (!"PUBLISHED".equals(event.getState())) {
-            throw new ConflictException("Event is not published");
+        if (event.getInitiator() != null && event.getInitiator().equals(userId)) {
+            throw new ConflictException("Initiator cannot create participation request for own event");
         }
 
         // Check participant limit
@@ -70,7 +68,7 @@ public class RequestServiceImpl implements RequestService {
         request.setEventId(eventId);
         request.setRequesterId(userId);
 
-        if (Boolean.FALSE.equals(event.getRequestModeration())) {
+        if (event.getParticipantLimit() == 0 || Boolean.FALSE.equals(event.getRequestModeration())) {
             request.setStatus(RequestStatus.CONFIRMED);
         } else {
             request.setStatus(RequestStatus.PENDING);
@@ -103,6 +101,12 @@ public class RequestServiceImpl implements RequestService {
     @Transactional(readOnly = true)
     public List<ParticipationRequestDto> getEventParticipants(Long userId, Long eventId) {
         log.debug("Get event participants, userId={}, eventId={}", userId, eventId);
+
+        EventFullDto event = getPublishedEventOrThrow(eventId);
+        if (event.getInitiator() == null || !event.getInitiator().equals(userId)) {
+            throw new ConflictException("User is not the event initiator");
+        }
+
         return requestRepository.findByEventId(eventId).stream()
                 .map(RequestMapper::toDto)
                 .collect(Collectors.toList());
@@ -113,19 +117,18 @@ public class RequestServiceImpl implements RequestService {
                                                                EventRequestStatusUpdateRequest request) {
         log.debug("Change request status, userId={}, eventId={}", userId, eventId);
 
-        EventFullDto event;
-        try {
-            event = eventClient.getEvent(eventId);
-        } catch (Exception e) {
-            throw new NotFoundException("Event not found");
-        }
+        EventFullDto event = getPublishedEventOrThrow(eventId);
 
-        if (!event.getInitiator().equals(userId)) {
+        if (event.getInitiator() == null || !event.getInitiator().equals(userId)) {
             throw new ConflictException("User is not the event initiator");
         }
 
         List<ParticipationRequestDto> confirmed = new ArrayList<>();
         List<ParticipationRequestDto> rejected = new ArrayList<>();
+
+        if (event.getParticipantLimit() == 0 || Boolean.FALSE.equals(event.getRequestModeration())) {
+            throw new ConflictException("Request moderation is not required for this event");
+        }
 
         Long confirmedCount = requestRepository.countConfirmedRequestsByEventId(eventId);
         int availableSlots = event.getParticipantLimit() - confirmedCount.intValue();
@@ -143,20 +146,36 @@ public class RequestServiceImpl implements RequestService {
             }
 
             if ("CONFIRMED".equals(request.getStatus())) {
-                if (availableSlots > 0) {
-                    req.setStatus(RequestStatus.CONFIRMED);
-                    availableSlots--;
-                } else {
+                if (availableSlots <= 0) {
                     req.setStatus(RequestStatus.REJECTED);
+                    requestRepository.save(req);
                     rejected.add(RequestMapper.toDto(req));
                     continue;
                 }
+
+                req.setStatus(RequestStatus.CONFIRMED);
+                availableSlots--;
+                requestRepository.save(req);
+                confirmed.add(RequestMapper.toDto(req));
             } else if ("REJECTED".equals(request.getStatus())) {
                 req.setStatus(RequestStatus.REJECTED);
+                requestRepository.save(req);
+                rejected.add(RequestMapper.toDto(req));
+            } else {
+                throw new ConflictException("Unsupported request status: " + request.getStatus());
             }
+        }
 
-            requestRepository.save(req);
-            confirmed.add(RequestMapper.toDto(req));
+        if (availableSlots == 0) {
+            List<Request> pendingRequests = requestRepository.findByEventId(eventId).stream()
+                    .filter(r -> r.getStatus() == RequestStatus.PENDING)
+                    .toList();
+
+            for (Request pending : pendingRequests) {
+                pending.setStatus(RequestStatus.REJECTED);
+                requestRepository.save(pending);
+                rejected.add(RequestMapper.toDto(pending));
+            }
         }
 
         EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
@@ -164,5 +183,28 @@ public class RequestServiceImpl implements RequestService {
         result.setRejectedRequests(rejected);
 
         return result;
+    }
+
+    private void ensureUserExists(Long userId) {
+        try {
+            userClient.getUserById(userId);
+        } catch (Exception e) {
+            throw new NotFoundException("User not found");
+        }
+    }
+
+    private EventFullDto getPublishedEventOrThrow(Long eventId) {
+        EventFullDto event;
+        try {
+            event = eventClient.getEvent(eventId);
+        } catch (Exception e) {
+            throw new NotFoundException("Event not found");
+        }
+
+        if (!"PUBLISHED".equals(event.getState())) {
+            throw new ConflictException("Event is not published");
+        }
+
+        return event;
     }
 }

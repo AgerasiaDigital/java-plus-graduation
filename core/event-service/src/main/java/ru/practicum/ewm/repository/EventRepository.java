@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.practicum.ewm.model.event.Event;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
@@ -20,6 +21,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("SELECT e FROM Event e WHERE e.categoryId IN :categoryIds")
     Page<Event> findByCategoryIdIn(@Param("categoryIds") List<Long> categoryIds, Pageable pageable);
+
+    List<Event> findByIdIn(Collection<Long> ids);
 
     boolean existsByCategoryId(Long categoryId);
 }

@@ -15,19 +15,18 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/users/{userId}/requests")
 @RequiredArgsConstructor
 @Validated
 public class RequestController {
     private final RequestService requestService;
 
-    @GetMapping
+    @GetMapping("/users/{userId}/requests")
     public List<ParticipationRequestDto> getUserRequests(@PathVariable @Positive Long userId) {
         log.debug("GET /users/{}/requests", userId);
         return requestService.getUserRequests(userId);
     }
 
-    @PostMapping
+    @PostMapping("/users/{userId}/requests")
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto addParticipationRequest(@PathVariable @Positive Long userId,
                                                            @RequestParam @Positive Long eventId) {
@@ -35,21 +34,21 @@ public class RequestController {
         return requestService.addParticipationRequest(userId, eventId);
     }
 
-    @PatchMapping("/{requestId}/cancel")
+    @PatchMapping("/users/{userId}/requests/{requestId}/cancel")
     public ParticipationRequestDto cancelRequest(@PathVariable @Positive Long userId,
                                                  @PathVariable @Positive Long requestId) {
         log.debug("PATCH /users/{}/requests/{}/cancel", userId, requestId);
         return requestService.cancelRequest(userId, requestId);
     }
 
-    @GetMapping("/{userId}/events/{eventId}/requests")
+    @GetMapping("/users/{userId}/events/{eventId}/requests")
     public List<ParticipationRequestDto> checkUserEventParticipation(@PathVariable @Positive Long userId,
                                                                      @PathVariable @Positive Long eventId) {
         log.debug("GET /users/{}/events/{}/requests", userId, eventId);
         return requestService.getEventParticipants(userId, eventId);
     }
 
-    @PatchMapping("/{userId}/events/{eventId}/requests")
+    @PatchMapping("/users/{userId}/events/{eventId}/requests")
     public EventRequestStatusUpdateResult changeStatusRequest(@PathVariable @Positive Long userId,
                                                               @PathVariable @Positive Long eventId,
                                                               @RequestBody EventRequestStatusUpdateRequest request) {
