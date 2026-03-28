@@ -1,0 +1,50 @@
+package ru.practicum.ewm.controller;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.ewm.dto.compilation.CompilationDto;
+import ru.practicum.ewm.dto.compilation.NewCompilationDto;
+import ru.practicum.ewm.dto.compilation.UpdateCompilationRequest;
+import ru.practicum.ewm.service.CompilationService;
+
+@Slf4j
+@RestController
+@RequestMapping("/admin/compilations")
+@RequiredArgsConstructor
+@Validated
+public class AdminCompilationController {
+    private final CompilationService compilationService;
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CompilationDto create(@RequestBody @Valid NewCompilationDto request) {
+        log.debug("POST /admin/compilations: {}", request);
+        return compilationService.create(request);
+    }
+
+    @DeleteMapping("/{compId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable @Positive Long compId) {
+        log.debug("DELETE /admin/compilations/{}", compId);
+        compilationService.deleteById(compId);
+    }
+
+    @PatchMapping("/{compId}")
+    public CompilationDto update(@PathVariable @Positive Long compId,
+                                 @RequestBody @Valid UpdateCompilationRequest request) {
+        log.debug("PATCH /admin/compilations/{}: {}", compId, request);
+        return compilationService.update(compId, request);
+    }
+}

@@ -5,25 +5,20 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import ru.practicum.ewm.dto.event.EventShortDto;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
 @FeignClient(name = "event-service", fallback = EventClient.EventClientFallback.class)
 public interface EventClient {
 
-    @GetMapping("/internal/events/by-ids")
-    List<EventShortDto> getEventsByIds(@RequestParam("ids") Set<Long> ids);
+    @GetMapping("/internal/events/exists-by-category")
+    boolean existsByCategory(@RequestParam("categoryId") Long categoryId);
 
     @Component
     @Slf4j
     class EventClientFallback implements EventClient {
         @Override
-        public List<EventShortDto> getEventsByIds(Set<Long> ids) {
-            log.warn("event-service unavailable, returning empty list for ids: {}", ids);
-            return Collections.emptyList();
+        public boolean existsByCategory(Long categoryId) {
+            log.warn("event-service unavailable, assuming no events for category {}", categoryId);
+            return false;
         }
     }
 }

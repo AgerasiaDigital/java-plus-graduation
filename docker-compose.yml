@@ -1,7 +1,48 @@
 services:
+  discovery-server:
+    build: infra/discovery-server
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  config-server:
+    build: infra/config-server
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  gateway-server:
+    build: infra/gateway-server
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+
   stats-server:
+    build: stat/stat-server
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
     ports:
       - "9090:9090"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      stats-db:
+        condition: service_started
 
   stats-db:
     image: postgres:16.1
@@ -11,8 +52,14 @@ services:
       - POSTGRES_PASSWORD=ewmpass
 
   ewm-service:
-    ports:
-      - "8080:8080"
+    build: core/main-service
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      ewm-db:
+        condition: service_started
 
   ewm-db:
     image: postgres:16.1
@@ -21,12 +68,32 @@ services:
       - POSTGRES_USER=ewmuser
       - POSTGRES_PASSWORD=ewmpass
 
+  category-service:
+    build: core/category-service
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      category-db:
+        condition: service_started
+
   category-db:
     image: postgres:16.1
     environment:
       - POSTGRES_DB=ewm-category
       - POSTGRES_USER=ewmuser
       - POSTGRES_PASSWORD=ewmpass
+
+  user-service:
+    build: core/user-service
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      user-db:
+        condition: service_started
 
   user-db:
     image: postgres:16.1
@@ -35,6 +102,16 @@ services:
       - POSTGRES_USER=ewmuser
       - POSTGRES_PASSWORD=ewmpass
 
+  event-service:
+    build: core/event-service
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      event-db:
+        condition: service_started
+
   event-db:
     image: postgres:16.1
     environment:
@@ -42,12 +119,32 @@ services:
       - POSTGRES_USER=ewmuser
       - POSTGRES_PASSWORD=ewmpass
 
+  request-service:
+    build: core/request-service
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      request-db:
+        condition: service_started
+
   request-db:
     image: postgres:16.1
     environment:
       - POSTGRES_DB=ewm-request
       - POSTGRES_USER=ewmuser
       - POSTGRES_PASSWORD=ewmpass
+
+  compilation-service:
+    build: core/compilation-service
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      compilation-db:
+        condition: service_started
 
   compilation-db:
     image: postgres:16.1
