@@ -5,6 +5,10 @@ services:
 
   stats-db:
     image: postgres:16.1
+    environment:
+      - POSTGRES_DB=ewm-stat
+      - POSTGRES_USER=ewmuser
+      - POSTGRES_PASSWORD=ewmpass
 
   ewm-service:
     ports:
@@ -12,3 +16,42 @@ services:
 
   ewm-db:
     image: postgres:16.1
+    environment:
+      - POSTGRES_DB=ewm-main
+      - POSTGRES_USER=ewmuser
+      - POSTGRES_PASSWORD=ewmpass
+
+  category-db:
+    image: postgres:16.1
+    environment:
+      - POSTGRES_DB=ewm-category
+      - POSTGRES_USER=ewmuser
+      - POSTGRES_PASSWORD=ewmpass
+
+  user-db:
+    image: postgres:16.1
+    environment:
+      - POSTGRES_DB=ewm-user
+      - POSTGRES_USER=ewmuser
+      - POSTGRES_PASSWORD=ewmpass
+
+  event-db:
+    image: postgres:16.1
+    environment:
+      - POSTGRES_DB=ewm-event
+      - POSTGRES_USER=ewmuser
+      - POSTGRES_PASSWORD=ewmpass
+
+  request-db:
+    image: postgres:16.1
+    environment:
+      - POSTGRES_DB=ewm-request
+      - POSTGRES_USER=ewmuser
+      - POSTGRES_PASSWORD=ewmpass
+
+  compilation-db:
+    image: postgres:16.1
+    environment:
+      - POSTGRES_DB=ewm-compilation
+      - POSTGRES_USER=ewmuser
+      - POSTGRES_PASSWORD=ewmpass
