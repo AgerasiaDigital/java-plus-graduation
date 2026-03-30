@@ -143,12 +143,11 @@ public class RequestServiceImpl implements RequestService {
                 }
                 if (availableSlots == 0) {
                     List<Request> pending = requestRepository.findByEventIdAndStatus(eventId, RequestStatus.PENDING);
-                    for (Request p : pending) {
-                        if (!updateRequest.getRequestIds().contains(p.getId())) {
-                            p.setStatus(RequestStatus.REJECTED);
-                            requestRepository.save(p);
-                        }
-                    }
+                    List<Request> toReject = pending.stream()
+                            .filter(p -> !updateRequest.getRequestIds().contains(p.getId()))
+                            .toList();
+                    toReject.forEach(p -> p.setStatus(RequestStatus.REJECTED));
+                    requestRepository.saveAll(toReject);
                 }
             }
         } else {

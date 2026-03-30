@@ -1,5 +1,6 @@
 package ru.practicum.compilation.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -42,9 +43,9 @@ public class ErrorHandler {
                 HttpStatus.NOT_FOUND.name(), LocalDateTime.now().format(formatter));
     }
 
-    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleJakartaConstraintViolationException(final jakarta.validation.ConstraintViolationException e) {
+    public ApiError handleJakartaConstraintViolationException(final ConstraintViolationException e) {
         log.warn("400 {}", e.getMessage());
         return new ApiError(e.getMessage(), "Request parameters was not valid",
                 HttpStatus.BAD_REQUEST.name(), LocalDateTime.now().format(formatter));

@@ -68,12 +68,7 @@ public class EventServiceImpl implements EventService {
     private Map<Long, Long> getConfirmedCounts(List<Event> events) {
         if (events == null || events.isEmpty()) return Map.of();
         List<Long> ids = events.stream().map(Event::getId).toList();
-        try {
-            return requestClient.getConfirmedCounts(ids);
-        } catch (Exception e) {
-            log.error("Error retrieving confirmed request counts: {}", e.getMessage());
-            return Map.of();
-        }
+        return requestClient.getConfirmedCounts(ids);
     }
 
     private Map<Long, UserShortDto> getInitiators(List<Event> events) {
