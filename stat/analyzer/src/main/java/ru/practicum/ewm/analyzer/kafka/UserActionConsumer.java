@@ -38,7 +38,7 @@ public class UserActionConsumer {
         log.debug("Analyzer received user action: userId={}, eventId={}", action.getUserId(), action.getEventId());
         double weight = ACTION_WEIGHTS.getOrDefault(action.getActionType(), 1.0);
         UserActionId id = new UserActionId(action.getUserId(), action.getEventId());
-        Instant timestamp = Instant.ofEpochMilli(action.getTimestamp());
+        Instant timestamp = action.getTimestamp();
 
         Optional<UserAction> existing = userActionRepository.findById(id);
         if (existing.isPresent()) {

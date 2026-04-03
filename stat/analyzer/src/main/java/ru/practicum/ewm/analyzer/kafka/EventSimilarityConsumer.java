@@ -10,8 +10,6 @@ import ru.practicum.ewm.analyzer.model.EventSimilarityId;
 import ru.practicum.ewm.analyzer.repository.EventSimilarityRepository;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 
-import java.time.Instant;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -34,7 +32,7 @@ public class EventSimilarityConsumer {
                 .orElse(new EventSimilarity());
         entity.setId(id);
         entity.setScore(avro.getScore());
-        entity.setTimestamp(Instant.ofEpochMilli(avro.getTimestamp()));
+        entity.setTimestamp(avro.getTimestamp());
         eventSimilarityRepository.save(entity);
     }
 }
