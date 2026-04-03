@@ -30,18 +30,18 @@ public interface EventMapper {
 
     @Mapping(target = "id", source = "event.id")
     @Mapping(target = "confirmedRequests", source = "requests")
-    @Mapping(target = "views", source = "views")
+    @Mapping(target = "rating", source = "rating")
     @Mapping(target = "initiator", source = "initiator")
     @Mapping(target = "annotation", source = "event.annotation")
     @Mapping(target = "category", source = "event.category")
     @Mapping(target = "eventDate", source = "event.eventDate")
     @Mapping(target = "paid", source = "event.paid")
     @Mapping(target = "title", source = "event.title")
-    EventShortDto toShortDto(Event event, Long requests, Long views, UserShortDto initiator);
+    EventShortDto toShortDto(Event event, Long requests, Double rating, UserShortDto initiator);
 
     @Mapping(target = "id", source = "event.id")
     @Mapping(target = "confirmedRequests", source = "requests")
-    @Mapping(target = "views", source = "views")
+    @Mapping(target = "rating", source = "rating")
     @Mapping(target = "location", source = "event.location")
     @Mapping(target = "initiator", source = "initiator")
     @Mapping(target = "annotation", source = "event.annotation")
@@ -55,7 +55,7 @@ public interface EventMapper {
     @Mapping(target = "requestModeration", source = "event.requestModeration")
     @Mapping(target = "state", source = "event.state")
     @Mapping(target = "title", source = "event.title")
-    EventFullDto toFullDto(Event event, Long requests, Long views, UserShortDto initiator);
+    EventFullDto toFullDto(Event event, Long requests, Double rating, UserShortDto initiator);
 
     Location toLocation(LocationDto locationDto);
 

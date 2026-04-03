@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.grpc.CollectorGrpcClient;
 import ru.practicum.request.client.EventClient;
 import ru.practicum.request.client.UserClient;
 import ru.practicum.request.dto.EventInfoDto;
@@ -32,6 +33,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final EventClient eventClient;
     private final UserClient userClient;
+    private final CollectorGrpcClient collectorGrpcClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -73,7 +75,9 @@ public class RequestServiceImpl implements RequestService {
         } else {
             request.setStatus(RequestStatus.PENDING);
         }
-        return RequestMapper.toDto(requestRepository.save(request));
+        ParticipationRequestDto result = RequestMapper.toDto(requestRepository.save(request));
+        collectorGrpcClient.collectRegister(userId, eventId);
+        return result;
     }
 
     @Override
@@ -162,6 +166,15 @@ public class RequestServiceImpl implements RequestService {
         result.setConfirmedRequests(confirmed);
         result.setRejectedRequests(rejected);
         return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void checkUserParticipation(Long userId, Long eventId) {
+        requestRepository.findByRequesterIdAndEventId(userId, eventId)
+                .filter(r -> r.getStatus() == RequestStatus.CONFIRMED)
+                .orElseThrow(() -> new ConflictException(
+                        String.format("User %d has no confirmed participation in event %d", userId, eventId)));
     }
 
     @Override

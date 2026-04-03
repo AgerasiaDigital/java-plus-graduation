@@ -11,6 +11,8 @@ import ru.practicum.request.service.RequestService;
 import java.util.List;
 import java.util.Map;
 
+
+
 @Slf4j
 @RestController
 @RequestMapping("/internal/requests")
@@ -22,5 +24,11 @@ public class RequestInternalController {
     public Map<Long, Long> getConfirmedCounts(@RequestParam List<Long> eventIds) {
         log.debug("INTERNAL GET /internal/requests/count?eventIds={}", eventIds);
         return requestService.getConfirmedCounts(eventIds);
+    }
+
+    @GetMapping("/participation")
+    public void checkUserParticipation(@RequestParam Long userId, @RequestParam Long eventId) {
+        log.debug("INTERNAL GET /internal/requests/participation?userId={}&eventId={}", userId, eventId);
+        requestService.checkUserParticipation(userId, eventId);
     }
 }

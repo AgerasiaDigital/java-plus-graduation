@@ -29,4 +29,8 @@ public interface EventService {
     EventInfoDto getEventInfo(Long eventId);
 
     List<EventShortDto> getEventsByIds(List<Long> ids);
+
+    List<EventShortDto> getRecommendations(Long userId, int maxResults);
+
+    void checkUserVisited(Long userId, Long eventId);
 }
