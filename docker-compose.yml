@@ -1,14 +1,156 @@
 services:
-  stats-server:
+
+  discovery-server:
+    build: infra/discovery-server
     ports:
-      - "9090:9090"
+      - "8761:8761"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  config-server:
+    build: infra/config-server
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gateway-server:
+    build: infra/gateway-server
+    ports:
+      - "8080:8080"
+    depends_on:
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
 
   stats-db:
     image: postgres:16.1
-
-  ewm-service:
+    environment:
+      POSTGRES_DB: stats
+      POSTGRES_USER: statsuser
+      POSTGRES_PASSWORD: statspass
     ports:
-      - "8080:8080"
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U statsuser -d stats" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  stats-server:
+    build: stat/stat-server
+    ports:
+      - "9090:9090"
+    depends_on:
+      stats-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
 
   ewm-db:
     image: postgres:16.1
+    environment:
+      POSTGRES_DB: ewm
+      POSTGRES_USER: ewmuser
+      POSTGRES_PASSWORD: ewmpass
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ewmuser -d ewm" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  users-db:
+    image: postgres:16.1
+    environment:
+      POSTGRES_DB: users
+      POSTGRES_USER: usersuser
+      POSTGRES_PASSWORD: userspass
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U usersuser -d users" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  requests-db:
+    image: postgres:16.1
+    environment:
+      POSTGRES_DB: requests
+      POSTGRES_USER: requser
+      POSTGRES_PASSWORD: reqpass
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U requser -d requests" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  compilations-db:
+    image: postgres:16.1
+    environment:
+      POSTGRES_DB: compilations
+      POSTGRES_USER: compuser
+      POSTGRES_PASSWORD: comppass
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U compuser -d compilations" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  event-service:
+    build: core/event-service
+    depends_on:
+      ewm-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+
+  user-service:
+    build: core/user-service
+    depends_on:
+      users-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+
+  request-service:
+    build: core/request-service
+    depends_on:
+      requests-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
+
+  compilation-service:
+    build: core/compilation-service
+    depends_on:
+      compilations-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_URL=http://discovery-server:8761/eureka
