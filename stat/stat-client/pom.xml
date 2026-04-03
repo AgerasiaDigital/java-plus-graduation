@@ -41,7 +41,6 @@
             <artifactId>grpc-client-spring-boot-starter</artifactId>
             <version>3.1.0.RELEASE</version>
         </dependency>
-        <!-- Принудительно выравниваем grpc-core до версии, совместимой с grpc-api из stats-proto -->
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-core</artifactId>
