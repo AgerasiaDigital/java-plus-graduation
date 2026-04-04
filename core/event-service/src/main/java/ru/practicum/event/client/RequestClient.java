@@ -11,4 +11,7 @@ import java.util.Map;
 public interface RequestClient {
     @GetMapping("/internal/requests/count")
     Map<Long, Long> getConfirmedCounts(@RequestParam List<Long> eventIds);
+
+    @GetMapping("/internal/requests/confirmed")
+    boolean hasConfirmedRequest(@RequestParam Long userId, @RequestParam Long eventId);
 }

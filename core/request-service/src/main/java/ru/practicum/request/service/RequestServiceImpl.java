@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.CollectorClient;
 import ru.practicum.request.client.EventClient;
 import ru.practicum.request.client.UserClient;
 import ru.practicum.request.dto.EventInfoDto;
@@ -32,6 +33,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final EventClient eventClient;
     private final UserClient userClient;
+    private final CollectorClient collectorClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -73,7 +75,13 @@ public class RequestServiceImpl implements RequestService {
         } else {
             request.setStatus(RequestStatus.PENDING);
         }
-        return RequestMapper.toDto(requestRepository.save(request));
+        ParticipationRequestDto saved = RequestMapper.toDto(requestRepository.save(request));
+        try {
+            collectorClient.sendUserAction(userId, eventId, "REGISTER");
+        } catch (Exception e) {
+            log.warn("Failed to send REGISTER action to collector: {}", e.getMessage());
+        }
+        return saved;
     }
 
     @Override
@@ -162,6 +170,14 @@ public class RequestServiceImpl implements RequestService {
         result.setConfirmedRequests(confirmed);
         result.setRejectedRequests(rejected);
         return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasConfirmedRequest(Long userId, Long eventId) {
+        return requestRepository.findByRequesterIdAndEventId(userId, eventId)
+                .map(r -> r.getStatus() == RequestStatus.CONFIRMED)
+                .orElse(false);
     }
 
     @Override

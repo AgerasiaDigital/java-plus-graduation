@@ -24,9 +24,13 @@ public interface EventService {
 
     List<EventShortDto> publicSearchEvents(EventPublicFilter eventPublicFilter, PageRequestDto pageRequestDto);
 
-    EventFullDto getEvent(Long eventId);
+    EventFullDto getEvent(Long eventId, Long userId);
 
     EventInfoDto getEventInfo(Long eventId);
 
     List<EventShortDto> getEventsByIds(List<Long> ids);
+
+    List<EventShortDto> getRecommendations(Long userId);
+
+    void likeEvent(Long userId, Long eventId);
 }

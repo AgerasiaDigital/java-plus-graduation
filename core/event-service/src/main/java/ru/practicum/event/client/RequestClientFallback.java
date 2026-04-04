@@ -11,4 +11,9 @@ public class RequestClientFallback implements RequestClient {
     public Map<Long, Long> getConfirmedCounts(List<Long> eventIds) {
         return Map.of();
     }
+
+    @Override
+    public boolean hasConfirmedRequest(Long userId, Long eventId) {
+        return false;
+    }
 }

@@ -1,20 +1,16 @@
 package ru.practicum.event.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.client.StatClient;
-import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.filter.EventAdminFilter;
 import ru.practicum.event.filter.EventInitiatorIdFilter;
 import ru.practicum.event.filter.EventPublicFilter;
 import ru.practicum.event.service.EventService;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,19 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventController {
     private final EventService eventService;
-    private final StatClient statClient;
-
-    private void saveHit(HttpServletRequest request) {
-        try {
-            statClient.hit(new EndpointHitDto(
-                    "ewm-service",
-                    request.getRequestURI(),
-                    request.getRemoteAddr(),
-                    LocalDateTime.now()));
-        } catch (Exception e) {
-            log.warn("Failed to save hit: {}", e.getMessage());
-        }
-    }
 
     @PostMapping("/users/{userId}/events")
     @ResponseStatus(HttpStatus.CREATED)
@@ -84,17 +67,30 @@ public class EventController {
 
     @GetMapping("/events")
     public List<EventShortDto> getEvents(@Valid EventPublicFilter filter,
-                                         PageRequestDto pageRequestDto,
-                                         HttpServletRequest request) {
+                                         PageRequestDto pageRequestDto) {
         log.info("GET /events");
-        saveHit(request);
         return eventService.publicSearchEvents(filter, pageRequestDto);
     }
 
+    @GetMapping("/events/recommendations")
+    public List<EventShortDto> getRecommendations(
+            @RequestHeader("X-EWM-USER-ID") long userId) {
+        log.info("GET /events/recommendations for userId={}", userId);
+        return eventService.getRecommendations(userId);
+    }
+
     @GetMapping("/events/{eventId}")
-    public EventFullDto getEvent(@PathVariable Long eventId, HttpServletRequest request) {
-        log.info("GET /events/{}", eventId);
-        saveHit(request);
-        return eventService.getEvent(eventId);
+    public EventFullDto getEvent(@PathVariable Long eventId,
+                                 @RequestHeader(value = "X-EWM-USER-ID", required = false) Long userId) {
+        log.info("GET /events/{} userId={}", eventId, userId);
+        return eventService.getEvent(eventId, userId);
+    }
+
+    @PutMapping("/events/{eventId}/like")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void likeEvent(@PathVariable Long eventId,
+                          @RequestHeader("X-EWM-USER-ID") long userId) {
+        log.info("PUT /events/{}/like userId={}", eventId, userId);
+        eventService.likeEvent(userId, eventId);
     }
 }

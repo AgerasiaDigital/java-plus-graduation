@@ -12,9 +12,13 @@
     <artifactId>stat</artifactId>
     <packaging>pom</packaging>
     <modules>
+        <module>stats-proto</module>
         <module>stat-dto</module>
         <module>stat-client</module>
         <module>stat-server</module>
+        <module>collector</module>
+        <module>aggregator</module>
+        <module>analyzer</module>
     </modules>
 
     <properties>

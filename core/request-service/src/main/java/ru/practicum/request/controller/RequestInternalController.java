@@ -23,4 +23,10 @@ public class RequestInternalController {
         log.debug("INTERNAL GET /internal/requests/count?eventIds={}", eventIds);
         return requestService.getConfirmedCounts(eventIds);
     }
+
+    @GetMapping("/confirmed")
+    public boolean hasConfirmedRequest(@RequestParam Long userId, @RequestParam Long eventId) {
+        log.debug("INTERNAL GET /internal/requests/confirmed?userId={}&eventId={}", userId, eventId);
+        return requestService.hasConfirmedRequest(userId, eventId);
+    }
 }
