@@ -31,7 +31,7 @@ public class UserActionConsumer {
                 action.getUserId(),
                 action.getEventId(),
                 action.getActionType().toString(),
-                action.getTimestamp()
+                action.getTimestamp().toEpochMilli()
         );
         similarities.forEach(producer::send);
     }

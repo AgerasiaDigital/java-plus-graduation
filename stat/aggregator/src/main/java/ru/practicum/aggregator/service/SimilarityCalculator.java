@@ -78,7 +78,7 @@ public class SimilarityCalculator {
                     .setEventA(eA)
                     .setEventB(eB)
                     .setScore(similarity)
-                    .setTimestamp(timestampMs)
+                    .setTimestamp(java.time.Instant.ofEpochMilli(timestampMs))
                     .build());
         }
 
