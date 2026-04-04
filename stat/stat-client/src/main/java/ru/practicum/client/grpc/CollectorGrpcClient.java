@@ -1,6 +1,5 @@
 package ru.practicum.client.grpc;
 
-import com.google.protobuf.Timestamp;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Component;
@@ -21,15 +20,11 @@ public class CollectorGrpcClient implements CollectorClient {
     @Override
     public void sendUserAction(long userId, long eventId, String actionType) {
         try {
-            Instant now = Instant.now();
             UserActionProto action = UserActionProto.newBuilder()
                     .setUserId(userId)
                     .setEventId(eventId)
                     .setActionType(toProtoActionType(actionType))
-                    .setTimestamp(Timestamp.newBuilder()
-                            .setSeconds(now.getEpochSecond())
-                            .setNanos(now.getNano())
-                            .build())
+                    .setTimestamp(Instant.now().toEpochMilli())
                     .build();
             collectorStub.collectUserAction(action);
             log.debug("Sent user action via gRPC: userId={}, eventId={}, type={}", userId, eventId, actionType);
