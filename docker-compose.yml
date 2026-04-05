@@ -203,6 +203,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
       config-server:
         condition: service_healthy
     environment:
@@ -213,6 +215,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
       config-server:
         condition: service_healthy
     environment:
@@ -225,6 +229,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
       config-server:
         condition: service_healthy
     environment:
