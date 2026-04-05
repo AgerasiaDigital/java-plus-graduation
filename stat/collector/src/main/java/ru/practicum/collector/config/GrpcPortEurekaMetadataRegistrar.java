@@ -2,12 +2,14 @@ package ru.practicum.collector.config;
 
 import com.netflix.appinfo.ApplicationInfoManager;
 import net.devh.boot.grpc.server.event.GrpcServerStartedEvent;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 @Component
+@ConditionalOnBean(ApplicationInfoManager.class)
 public class GrpcPortEurekaMetadataRegistrar {
 
     private final ApplicationInfoManager applicationInfoManager;
