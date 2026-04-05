@@ -102,7 +102,7 @@ public class RecommendationsGrpcClient {
             throw new IllegalStateException("No Eureka instances for service: " + serviceId);
         }
         ServiceInstance i = instances.getFirst();
-        int port = parseGrpcPort(i);
+        int port = GrpcInstanceMetadata.parseGrpcPort(i, 9102);
         String target = i.getHost() + ":" + port;
         if (stub == null || !target.equals(cachedTarget)) {
             shutdownQuietly();
@@ -113,14 +113,6 @@ public class RecommendationsGrpcClient {
             stub = RecommendationsControllerGrpc.newBlockingStub(channel);
         }
         return stub;
-    }
-
-    private static int parseGrpcPort(ServiceInstance i) {
-        String p = i.getMetadata().get("grpc.port");
-        if (p == null || p.isBlank()) {
-            return 9102;
-        }
-        return Integer.parseInt(p);
     }
 
     private static EventScore toScore(RecommendedEventProto r) {

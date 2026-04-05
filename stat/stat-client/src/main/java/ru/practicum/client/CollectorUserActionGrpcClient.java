@@ -64,7 +64,7 @@ public class CollectorUserActionGrpcClient {
             throw new IllegalStateException("No Eureka instances for service: " + serviceId);
         }
         ServiceInstance i = instances.getFirst();
-        int port = parseGrpcPort(i);
+        int port = GrpcInstanceMetadata.parseGrpcPort(i, 9101);
         String target = i.getHost() + ":" + port;
         if (stub == null || !target.equals(cachedTarget)) {
             shutdownQuietly();
@@ -75,14 +75,6 @@ public class CollectorUserActionGrpcClient {
             stub = UserActionControllerGrpc.newBlockingStub(channel);
         }
         return stub;
-    }
-
-    private static int parseGrpcPort(ServiceInstance i) {
-        String p = i.getMetadata().get("grpc.port");
-        if (p == null || p.isBlank()) {
-            return 9101;
-        }
-        return Integer.parseInt(p);
     }
 
     private void resetChannel() {
