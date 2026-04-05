@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -32,6 +33,14 @@ public class ErrorHandler {
         return new ApiError(
                 errors.entrySet().stream().map(en -> en.getKey() + ": " + en.getValue()).collect(Collectors.joining("; ")),
                 "Request parameters was not valid", HttpStatus.BAD_REQUEST.name(), LocalDateTime.now().format(formatter));
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMissingRequestHeader(final MissingRequestHeaderException e) {
+        log.warn("400 {}", e.getMessage());
+        return new ApiError(e.getMessage(), "Missing required header",
+                HttpStatus.BAD_REQUEST.name(), LocalDateTime.now().format(formatter));
     }
 
     @ExceptionHandler(ValidationException.class)

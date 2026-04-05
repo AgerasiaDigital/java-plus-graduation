@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.CollectorUserActionGrpcClient;
 import ru.practicum.request.client.EventClient;
 import ru.practicum.request.client.UserClient;
 import ru.practicum.request.dto.EventInfoDto;
@@ -32,6 +33,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestRepository requestRepository;
     private final EventClient eventClient;
     private final UserClient userClient;
+    private final CollectorUserActionGrpcClient collectorUserActionGrpcClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -73,7 +75,13 @@ public class RequestServiceImpl implements RequestService {
         } else {
             request.setStatus(RequestStatus.PENDING);
         }
-        return RequestMapper.toDto(requestRepository.save(request));
+        ParticipationRequestDto dto = RequestMapper.toDto(requestRepository.save(request));
+        try {
+            collectorUserActionGrpcClient.collectRegister(userId, eventId);
+        } catch (Exception e) {
+            log.warn("Failed to send registration to collector: {}", e.getMessage());
+        }
+        return dto;
     }
 
     @Override
