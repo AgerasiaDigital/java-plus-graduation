@@ -28,7 +28,7 @@ public class UserActionKafkaConsumer {
                 action.getUserId(), action.getEventId(), action.getActionType());
 
         double weight = toWeight(action.getActionType());
-        Instant timestamp = Instant.ofEpochMilli(action.getTimestamp());
+        Instant timestamp = action.getTimestamp();
 
         Optional<UserActionEntity> existing =
                 userActionRepository.findByUserIdAndEventId(action.getUserId(), action.getEventId());

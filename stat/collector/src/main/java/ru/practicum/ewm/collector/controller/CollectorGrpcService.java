@@ -1,6 +1,7 @@
 package ru.practicum.ewm.collector.controller;
 
 import com.google.protobuf.Empty;
+import java.time.Instant;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +33,8 @@ public class CollectorGrpcService extends UserActionControllerGrpc.UserActionCon
                 .setUserId(request.getUserId())
                 .setEventId(request.getEventId())
                 .setActionType(toAvro(request.getActionType()))
-                .setTimestamp(request.getTimestamp().getSeconds() * 1000
-                        + request.getTimestamp().getNanos() / 1_000_000)
+                .setTimestamp(Instant.ofEpochMilli(request.getTimestamp().getSeconds() * 1000
+                        + request.getTimestamp().getNanos() / 1_000_000))
                 .build();
 
         kafkaTemplate.send(userActionsTopic, String.valueOf(request.getUserId()), avro);

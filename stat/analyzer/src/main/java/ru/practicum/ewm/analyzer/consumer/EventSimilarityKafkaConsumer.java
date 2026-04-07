@@ -35,14 +35,14 @@ public class EventSimilarityKafkaConsumer {
         if (existing.isPresent()) {
             EventSimilarityEntity entity = existing.get();
             entity.setScore(similarity.getScore());
-            entity.setUpdatedAt(Instant.ofEpochMilli(similarity.getTimestamp()));
+            entity.setUpdatedAt(similarity.getTimestamp());
             eventSimilarityRepository.save(entity);
         } else {
             eventSimilarityRepository.save(EventSimilarityEntity.builder()
                     .eventA(eventA)
                     .eventB(eventB)
                     .score(similarity.getScore())
-                    .updatedAt(Instant.ofEpochMilli(similarity.getTimestamp()))
+                    .updatedAt(similarity.getTimestamp())
                     .build());
         }
     }

@@ -68,7 +68,7 @@ public class EventSimilarityCalculator {
         }
 
         // Recalculate and emit similarity for all events this user has interacted with
-        long now = Instant.now().toEpochMilli();
+        Instant now = Instant.now();
         List<EventSimilarityAvro> similarities = new ArrayList<>();
 
         for (Map.Entry<Long, Map<Long, Double>> entry : eventWeights.entrySet()) {
