@@ -1,20 +1,20 @@
 package ru.practicum.event.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.client.StatClient;
-import ru.practicum.dto.EndpointHitDto;
+import ru.practicum.client.CollectorGrpcClient;
+import ru.practicum.event.client.RequestClient;
 import ru.practicum.event.dto.*;
+import ru.practicum.event.exception.ValidationException;
 import ru.practicum.event.filter.EventAdminFilter;
 import ru.practicum.event.filter.EventInitiatorIdFilter;
 import ru.practicum.event.filter.EventPublicFilter;
 import ru.practicum.event.service.EventService;
+import ru.practicum.grpc.stats.collector.ActionTypeProto;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,19 +23,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventController {
     private final EventService eventService;
-    private final StatClient statClient;
-
-    private void saveHit(HttpServletRequest request) {
-        try {
-            statClient.hit(new EndpointHitDto(
-                    "ewm-service",
-                    request.getRequestURI(),
-                    request.getRemoteAddr(),
-                    LocalDateTime.now()));
-        } catch (Exception e) {
-            log.warn("Failed to save hit: {}", e.getMessage());
-        }
-    }
+    private final CollectorGrpcClient collectorGrpcClient;
+    private final RequestClient requestClient;
 
     @PostMapping("/users/{userId}/events")
     @ResponseStatus(HttpStatus.CREATED)
@@ -84,17 +73,33 @@ public class EventController {
 
     @GetMapping("/events")
     public List<EventShortDto> getEvents(@Valid EventPublicFilter filter,
-                                         PageRequestDto pageRequestDto,
-                                         HttpServletRequest request) {
+                                         PageRequestDto pageRequestDto) {
         log.info("GET /events");
-        saveHit(request);
         return eventService.publicSearchEvents(filter, pageRequestDto);
     }
 
     @GetMapping("/events/{eventId}")
-    public EventFullDto getEvent(@PathVariable Long eventId, HttpServletRequest request) {
-        log.info("GET /events/{}", eventId);
-        saveHit(request);
-        return eventService.getEvent(eventId);
+    public EventFullDto getEvent(@PathVariable Long eventId,
+                                 @RequestHeader("X-EWM-USER-ID") long userId) {
+        log.info("GET /events/{} userId={}", eventId, userId);
+        return eventService.getEvent(eventId, userId);
+    }
+
+    @PutMapping("/events/{eventId}/like")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void likeEvent(@PathVariable Long eventId,
+                          @RequestHeader("X-EWM-USER-ID") long userId) {
+        log.info("PUT /events/{}/like userId={}", eventId, userId);
+        if (!requestClient.isUserParticipant(userId, eventId)) {
+            throw new ValidationException("User " + userId + " has not participated in event " + eventId);
+        }
+        collectorGrpcClient.collectUserAction(userId, eventId, ActionTypeProto.ACTION_LIKE);
+    }
+
+    @GetMapping("/events/recommendations")
+    public List<EventShortDto> getRecommendations(@RequestHeader("X-EWM-USER-ID") long userId,
+                                                  @RequestParam(defaultValue = "10") int maxResults) {
+        log.info("GET /events/recommendations userId={}", userId);
+        return eventService.getRecommendations(userId, maxResults);
     }
 }

@@ -11,4 +11,7 @@ import java.util.Map;
 public interface RequestClient {
     @GetMapping("/internal/requests/count")
     Map<Long, Long> getConfirmedCounts(@RequestParam List<Long> eventIds);
+
+    @GetMapping("/internal/requests/participation")
+    boolean isUserParticipant(@RequestParam Long userId, @RequestParam Long eventId);
 }

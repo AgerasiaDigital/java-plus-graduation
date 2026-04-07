@@ -23,4 +23,10 @@ public class RequestInternalController {
         log.debug("INTERNAL GET /internal/requests/count?eventIds={}", eventIds);
         return requestService.getConfirmedCounts(eventIds);
     }
+
+    @GetMapping("/participation")
+    public boolean isUserParticipant(@RequestParam Long userId, @RequestParam Long eventId) {
+        log.debug("INTERNAL GET /internal/requests/participation?userId={}&eventId={}", userId, eventId);
+        return requestService.isUserParticipant(userId, eventId);
+    }
 }
