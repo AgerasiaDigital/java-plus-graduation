@@ -2,6 +2,7 @@ package ru.practicum.ewm.collector.controller;
 
 import com.google.protobuf.Empty;
 import java.time.Instant;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,18 +30,27 @@ public class CollectorGrpcService extends UserActionControllerGrpc.UserActionCon
         log.info("Received user action: userId={}, eventId={}, type={}",
                 request.getUserId(), request.getEventId(), request.getActionType());
 
-        UserActionAvro avro = UserActionAvro.newBuilder()
-                .setUserId(request.getUserId())
-                .setEventId(request.getEventId())
-                .setActionType(toAvro(request.getActionType()))
-                .setTimestamp(Instant.ofEpochMilli(request.getTimestamp().getSeconds() * 1000
-                        + request.getTimestamp().getNanos() / 1_000_000))
-                .build();
+        try {
+            UserActionAvro avro = UserActionAvro.newBuilder()
+                    .setUserId(request.getUserId())
+                    .setEventId(request.getEventId())
+                    .setActionType(toAvro(request.getActionType()))
+                    .setTimestamp(Instant.ofEpochMilli(request.getTimestamp().getSeconds() * 1000
+                            + request.getTimestamp().getNanos() / 1_000_000))
+                    .build();
 
-        kafkaTemplate.send(userActionsTopic, String.valueOf(request.getUserId()), avro);
+            kafkaTemplate.send(userActionsTopic, String.valueOf(request.getUserId()), avro);
 
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
+            responseObserver.onNext(Empty.getDefaultInstance());
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            log.error("Failed to process user action: userId={}, eventId={}, type={}: {}",
+                    request.getUserId(), request.getEventId(), request.getActionType(), e.getMessage());
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Failed to send user action: " + e.getMessage())
+                    .withCause(e)
+                    .asRuntimeException());
+        }
     }
 
     private ActionTypeAvro toAvro(ActionTypeProto proto) {
