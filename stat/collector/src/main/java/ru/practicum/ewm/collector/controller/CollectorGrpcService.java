@@ -39,10 +39,20 @@ public class CollectorGrpcService extends UserActionControllerGrpc.UserActionCon
                             + request.getTimestamp().getNanos() / 1_000_000))
                     .build();
 
-            kafkaTemplate.send(userActionsTopic, String.valueOf(request.getUserId()), avro);
-
-            responseObserver.onNext(Empty.getDefaultInstance());
-            responseObserver.onCompleted();
+            kafkaTemplate.send(userActionsTopic, String.valueOf(request.getUserId()), avro)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("Failed to send user action to Kafka: userId={}, eventId={}, type={}: {}",
+                                    request.getUserId(), request.getEventId(), request.getActionType(), ex.getMessage());
+                            responseObserver.onError(Status.INTERNAL
+                                    .withDescription("Failed to send user action: " + ex.getMessage())
+                                    .withCause(ex)
+                                    .asRuntimeException());
+                        } else {
+                            responseObserver.onNext(Empty.getDefaultInstance());
+                            responseObserver.onCompleted();
+                        }
+                    });
         } catch (Exception e) {
             log.error("Failed to process user action: userId={}, eventId={}, type={}: {}",
                     request.getUserId(), request.getEventId(), request.getActionType(), e.getMessage());

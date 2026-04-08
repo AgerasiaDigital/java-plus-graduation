@@ -18,11 +18,11 @@ public class UserActionAvroSerializer implements Serializer<UserActionAvro> {
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-            DatumWriter<UserActionAvro> writer = new SpecificDatumWriter<>(UserActionAvro.SCHEMA$);
+            DatumWriter<UserActionAvro> writer = new SpecificDatumWriter<>(UserActionAvro.class);
             writer.write(data, encoder);
             encoder.flush();
             return out.toByteArray();
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to serialize UserActionAvro", e);
         }
     }

@@ -13,7 +13,7 @@ public class UserActionAvroDeserializer implements Deserializer<UserActionAvro> 
     public UserActionAvro deserialize(String topic, byte[] data) {
         if (data == null) return null;
         try {
-            DatumReader<UserActionAvro> reader = new SpecificDatumReader<>(UserActionAvro.SCHEMA$);
+            DatumReader<UserActionAvro> reader = new SpecificDatumReader<>(UserActionAvro.class);
             BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(data, null);
             return reader.read(null, decoder);
         } catch (Exception e) {

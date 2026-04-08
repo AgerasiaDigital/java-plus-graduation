@@ -18,11 +18,11 @@ public class EventSimilarityAvroSerializer implements Serializer<EventSimilarity
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-            DatumWriter<EventSimilarityAvro> writer = new SpecificDatumWriter<>(EventSimilarityAvro.SCHEMA$);
+            DatumWriter<EventSimilarityAvro> writer = new SpecificDatumWriter<>(EventSimilarityAvro.class);
             writer.write(data, encoder);
             encoder.flush();
             return out.toByteArray();
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to serialize EventSimilarityAvro", e);
         }
     }

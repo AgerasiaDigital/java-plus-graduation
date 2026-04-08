@@ -13,7 +13,7 @@ public class EventSimilarityAvroDeserializer implements Deserializer<EventSimila
     public EventSimilarityAvro deserialize(String topic, byte[] data) {
         if (data == null) return null;
         try {
-            DatumReader<EventSimilarityAvro> reader = new SpecificDatumReader<>(EventSimilarityAvro.SCHEMA$);
+            DatumReader<EventSimilarityAvro> reader = new SpecificDatumReader<>(EventSimilarityAvro.class);
             BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(data, null);
             return reader.read(null, decoder);
         } catch (Exception e) {
