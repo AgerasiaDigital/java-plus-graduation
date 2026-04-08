@@ -1,0 +1,16 @@
+grpc:
+  server:
+    port: 0
+
+server:
+  port: 0
+
+spring:
+  kafka:
+    producer:
+      value-serializer: ru.practicum.ewm.stats.common.kafka.AvroSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+kafka:
+  topic:
+    user-actions: stats.user-actions.v1

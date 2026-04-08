@@ -1,0 +1,6 @@
+{
+  "namespace": "ru.practicum.ewm.stats.kafka",
+  "type": "enum",
+  "name": "ActionTypeAvro",
+  "symbols": ["VIEW", "REGISTER", "LIKE"]
+}

@@ -47,6 +47,18 @@
     {
       "description": "API для работы с подборками событий",
       "name": "Admin: Подборки событий"
+    },
+    {
+      "description": "Закрытый API для работы с комментариями пользователей",
+      "name": "Private: Комментарии"
+    },
+    {
+      "description": "API для администрирования комментариев",
+      "name": "Admin: Комментарии"
+    },
+    {
+      "description": "Публичный API для работы с комментариями",
+      "name": "Public: Комментарии"
     }
   ],
   "paths": {
@@ -462,7 +474,8 @@
             "name": "rangeStart",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "date-time"
             }
           },
           {
@@ -471,7 +484,8 @@
             "name": "rangeEnd",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "date-time"
             }
           },
           {
@@ -529,7 +543,7 @@
             "description": "Запрос составлен некорректно"
           }
         },
-        "summary": "Поиск событий",
+        "summary": "Поиск событий (Admin)",
         "tags": [
           "Admin: События"
         ]
@@ -538,7 +552,7 @@
     "/admin/events/{eventId}": {
       "patch": {
         "description": "Редактирование данных любого события администратором. Валидация данных не требуется.\nОбратите внимание:\n - дата начала изменяемого события должна быть не ранее чем за час от даты публикации. (Ожидается код ошибки 409)\n- событие можно публиковать, только если оно в состоянии ожидания публикации (Ожидается код ошибки 409)\n- событие можно отклонить, только если оно еще не опубликовано (Ожидается код ошибки 409)",
-        "operationId": "updateEvent_1",
+        "operationId": "updateEventByAdmin",
         "parameters": [
           {
             "description": "id события",
@@ -755,7 +769,7 @@
     },
     "/admin/users/{userId}": {
       "delete": {
-        "operationId": "delete",
+        "operationId": "deleteUserByAdmin",
         "parameters": [
           {
             "description": "id пользователя",
@@ -798,7 +812,7 @@
     "/categories": {
       "get": {
         "description": "В случае, если по заданным фильтрам не найдено ни одной категории, возвращает пустой список",
-        "operationId": "getCategories",
+        "operationId": "getCategoriesPublic",
         "parameters": [
           {
             "description": "количество категорий, которые нужно пропустить для формирования текущего набора",
@@ -855,7 +869,7 @@
             "description": "Запрос составлен некорректно"
           }
         },
-        "summary": "Получение категорий",
+        "summary": "Получение категорий (Public)",
         "tags": [
           "Public: Категории"
         ]
@@ -864,7 +878,7 @@
     "/categories/{catId}": {
       "get": {
         "description": "В случае, если категории с заданным id не найдено, возвращает статус код 404",
-        "operationId": "getCategory",
+        "operationId": "getCategoryPublic",
         "parameters": [
           {
             "description": "id категории",
@@ -921,7 +935,7 @@
             "description": "Категория не найдена или недоступна"
           }
         },
-        "summary": "Получение информации о категории по её идентификатору",
+        "summary": "Получение информации о категории по её идентификатору (Public)",
         "tags": [
           "Public: Категории"
         ]
@@ -930,7 +944,7 @@
     "/compilations": {
       "get": {
         "description": "В случае, если по заданным фильтрам не найдено ни одной подборки, возвращает пустой список",
-        "operationId": "getCompilations",
+        "operationId": "getCompilationsPublic",
         "parameters": [
           {
             "description": "искать только закрепленные/не закрепленные подборки",
@@ -996,7 +1010,7 @@
             "description": "Запрос составлен некорректно"
           }
         },
-        "summary": "Получение подборок событий",
+        "summary": "Получение подборок событий (Public)",
         "tags": [
           "Public: Подборки событий"
         ]
@@ -1005,7 +1019,7 @@
     "/compilations/{compId}": {
       "get": {
         "description": "В случае, если подборки с заданным id не найдено, возвращает статус код 404",
-        "operationId": "getCompilation",
+        "operationId": "getCompilationPublic",
         "parameters": [
           {
             "description": "id подборки",
@@ -1062,7 +1076,7 @@
             "description": "Подборка не найдена или недоступна"
           }
         },
-        "summary": "Получение подборки событий по его id",
+        "summary": "Получение подборки событий по его id (Public)",
         "tags": [
           "Public: Подборки событий"
         ]
@@ -1071,7 +1085,7 @@
     "/events": {
       "get": {
         "description": "Обратите внимание: \n- это публичный эндпоинт, соответственно в выдаче должны быть только опубликованные события\n- текстовый поиск (по аннотации и подробному описанию) должен быть без учета регистра букв\n- если в запросе не указан диапазон дат [rangeStart-rangeEnd], то нужно выгружать события, которые произойдут позже текущей даты и времени\n- информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие\n- информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики\n\nВ случае, если по заданным фильтрам не найдено ни одного события, возвращает пустой список",
-        "operationId": "getEvents_1",
+        "operationId": "getEventsPublic",
         "parameters": [
           {
             "description": "текст для поиска в содержимом аннотации и подробном описании события",
@@ -1112,7 +1126,8 @@
             "name": "rangeStart",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "date-time"
             }
           },
           {
@@ -1121,7 +1136,8 @@
             "name": "rangeEnd",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "date-time"
             }
           },
           {
@@ -1202,7 +1218,7 @@
             "description": "Запрос составлен некорректно"
           }
         },
-        "summary": "Получение событий с возможностью фильтрации",
+        "summary": "Получение событий с возможностью фильтрации (Public)",
         "tags": [
           "Public: События"
         ]
@@ -1211,7 +1227,7 @@
     "/events/{id}": {
       "get": {
         "description": "Обратите внимание:\n- событие должно быть опубликовано\n- информация о событии должна включать в себя количество просмотров и количество подтвержденных запросов\n- информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики\n\nВ случае, если события с заданным id не найдено, возвращает статус код 404",
-        "operationId": "getEvent_1",
+        "operationId": "getEventPublic",
         "parameters": [
           {
             "description": "id события",
@@ -1268,7 +1284,7 @@
             "description": "Событие не найдено или недоступно"
           }
         },
-        "summary": "Получение подробной информации об опубликованном событии по его идентификатору",
+        "summary": "Получение подробной информации об опубликованном событии по его идентификатору (Public)",
         "tags": [
           "Public: События"
         ]
@@ -1277,7 +1293,7 @@
     "/users/{userId}/events": {
       "get": {
         "description": "В случае, если по заданным фильтрам не найдено ни одного события, возвращает пустой список",
-        "operationId": "getEvents",
+        "operationId": "getEventsAddedByUser",
         "parameters": [
           {
             "description": "id текущего пользователя",
@@ -1351,7 +1367,7 @@
       },
       "post": {
         "description": "Обратите внимание: дата и время на которые намечено событие не может быть раньше, чем через два часа от текущего момента",
-        "operationId": "addEvent",
+        "operationId": "addEventByUser",
         "parameters": [
           {
             "description": "id текущего пользователя",
@@ -1428,7 +1444,7 @@
     "/users/{userId}/events/{eventId}": {
       "get": {
         "description": "В случае, если события с заданным id не найдено, возвращает статус код 404",
-        "operationId": "getEvent",
+        "operationId": "getEventAddedByUser",
         "parameters": [
           {
             "description": "id текущего пользователя",
@@ -1502,7 +1518,7 @@
       },
       "patch": {
         "description": "Обратите внимание:\n- изменить можно только отмененные события или события в состоянии ожидания модерации (Ожидается код ошибки 409)\n- дата и время на которые намечено событие не может быть раньше, чем через два часа от текущего момента (Ожидается код ошибки 409)\n",
-        "operationId": "updateEvent",
+        "operationId": "updateEventByUser",
         "parameters": [
           {
             "description": "id текущего пользователя",
@@ -1605,7 +1621,7 @@
     "/users/{userId}/events/{eventId}/requests": {
       "get": {
         "description": "В случае, если по заданным фильтрам не найдено ни одной заявки, возвращает пустой список",
-        "operationId": "getEventParticipants",
+        "operationId": "getEventParticipantsByUser",
         "parameters": [
           {
             "description": "id текущего пользователя",
@@ -1666,7 +1682,7 @@
       },
       "patch": {
         "description": "Обратите внимание:\n- если для события лимит заявок равен 0 или отключена пре-модерация заявок, то подтверждение заявок не требуется\n- нельзя подтвердить заявку, если уже достигнут лимит по заявкам на данное событие (Ожидается код ошибки 409)\n- статус можно изменить только у заявок, находящихся в состоянии ожидания (Ожидается код ошибки 409)\n- если при подтверждении данной заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки необходимо отклонить",
-        "operationId": "changeRequestStatus",
+        "operationId": "changeRequestStatusByUser",
         "parameters": [
           {
             "description": "id текущего пользователя",
@@ -1983,6 +1999,532 @@
           "Private: Запросы на участие"
         ]
       }
+    },
+    "/users/{userId}/comments": {
+      "post": {
+        "tags": [
+          "Private: Комментарии"
+        ],
+        "summary": "Создание нового комментария к событию",
+        "description": "Создает новый комментарий к событию от имени авторизованного пользователя.",
+        "operationId": "addComment",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID пользователя, создающего комментарий",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "query",
+            "description": "ID события, к которому добавляется комментарий",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Данные нового комментария",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewCommentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Комментарий успешно создан",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (например, невалидный текст комментария)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Пользователь или событие не найдены",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт (например, событие не опубликовано или комментарии к событию отключены)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Private: Комментарии"
+        ],
+        "summary": "Получение списка своих комментариев",
+        "description": "Получает список всех комментариев, оставленных текущим пользователем, которые не помечены как удаленные.",
+        "operationId": "getUserComments",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID пользователя, чьи комментарии запрашиваются",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Количество комментариев, которые нужно пропустить для формирования текущего набора",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Количество комментариев в наборе",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список комментариев пользователя",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommentDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/comments/{commentId}": {
+      "patch": {
+        "tags": [
+          "Private: Комментарии"
+        ],
+        "summary": "Обновление своего комментария",
+        "description": "Обновляет текст своего комментария, если он не удален и не прошло 6 часов с момента создания.",
+        "operationId": "updateUserComment",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID пользователя, обновляющего комментарий",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "description": "ID обновляемого комментария",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Новый текст комментария",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Комментарий успешно обновлен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный запрос (например, невалидный текст комментария)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Комментарий не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Конфликт (например, комментарий помечен как удаленный или истекло время для редактирования)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Private: Комментарии"
+        ],
+        "summary": "\"Мягкое\" удаление своего комментария",
+        "description": "Помечает свой комментарий как удаленный. Фактически комментарий не удаляется из базы данных.",
+        "operationId": "deleteUserComment",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID пользователя, удаляющего комментарий",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "description": "ID удаляемого комментария",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Комментарий успешно помечен как удаленный"
+          },
+          "404": {
+            "description": "Комментарий не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/comments": {
+      "get": {
+        "tags": [
+          "Admin: Комментарии"
+        ],
+        "summary": "Получение списка всех комментариев с фильтрами (Admin)",
+        "description": "Администратор может получить список всех комментариев с возможностью фильтрации по автору, событию и статусу удаления.",
+        "operationId": "getAllCommentsAdmin",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "ID автора комментария для фильтрации",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "query",
+            "description": "ID события для фильтрации",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "isDeleted",
+            "in": "query",
+            "description": "Фильтр по статусу удаления (true - показывать удаленные, false - не удаленные, отсутствует - все)",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Количество комментариев, которые нужно пропустить для формирования текущего набора",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Количество комментариев в наборе",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список комментариев",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommentDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректные параметры запроса",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/comments/{commentId}": {
+      "delete": {
+        "tags": [
+          "Admin: Комментарии"
+        ],
+        "summary": "\"Мягкое\" удаление любого комментария (Admin)",
+        "description": "Администратор помечает любой комментарий как удаленный.",
+        "operationId": "deleteCommentByAdmin",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "description": "ID удаляемого комментария",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Комментарий успешно помечен как удаленный"
+          },
+          "404": {
+            "description": "Комментарий не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/comments/{commentId}/restore": {
+      "patch": {
+        "tags": [
+          "Admin: Комментарии"
+        ],
+        "summary": "Восстановление \"мягко\" удаленного комментария (Admin)",
+        "description": "Администратор восстанавливает комментарий, ранее помеченный как удаленный.",
+        "operationId": "restoreCommentByAdmin",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "description": "ID восстанавливаемого комментария",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Комментарий успешно восстановлен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Комментарий не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{eventId}/comments": {
+      "get": {
+        "tags": [
+          "Public: Комментарии"
+        ],
+        "summary": "Получение списка комментариев для события (Public)",
+        "description": "Получает список всех не удаленных комментариев для указанного события. Если комментарии для события отключены, возвращает пустой список.",
+        "operationId": "getEventCommentsPublic",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "description": "ID события",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Количество комментариев, которые нужно пропустить для формирования текущего набора",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Количество комментариев в наборе",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "default": 10
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Вариант сортировки комментариев (например, 'createdOn,DESC' или 'createdOn,ASC'). По умолчанию 'createdOn,DESC'.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "createdOn,DESC"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список комментариев к событию",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommentDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Событие не найдено или не опубликовано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2215,6 +2757,7 @@
           },
           "createdOn": {
             "type": "string",
+            "format": "date-time",
             "description": "Дата и время создания события (в формате \"yyyy-MM-dd HH:mm:ss\")",
             "example": "2022-09-06 11:00:23"
           },
@@ -2225,6 +2768,7 @@
           },
           "eventDate": {
             "type": "string",
+            "format": "date-time",
             "description": "Дата и время на которые намечено событие (в формате \"yyyy-MM-dd HH:mm:ss\")",
             "example": "2024-12-31 15:10:05"
           },
@@ -2254,6 +2798,7 @@
           },
           "publishedOn": {
             "type": "string",
+            "format": "date-time",
             "description": "Дата и время публикации события (в формате \"yyyy-MM-dd HH:mm:ss\")",
             "example": "2022-09-06 15:10:05"
           },
@@ -2283,6 +2828,11 @@
             "description": "Количество просмотрев события",
             "format": "int64",
             "example": 999
+          },
+          "commentsEnabled": {
+            "type": "boolean",
+            "description": "Разрешены ли комментарии для данного события.",
+            "default": true
           }
         }
       },
@@ -2360,6 +2910,7 @@
           },
           "eventDate": {
             "type": "string",
+            "format": "date-time",
             "description": "Дата и время на которые намечено событие (в формате \"yyyy-MM-dd HH:mm:ss\")",
             "example": "2024-12-31 15:10:05"
           },
@@ -2531,6 +3082,7 @@
           },
           "eventDate": {
             "type": "string",
+            "format": "date-time",
             "description": "Дата и время на которые намечено событие. Дата и время указываются в формате \"yyyy-MM-dd HH:mm:ss\"",
             "example": "2024-12-31 15:10:05"
           },
@@ -2562,6 +3114,11 @@
             "type": "string",
             "description": "Заголовок события",
             "example": "Сплав на байдарках"
+          },
+          "commentsEnabled": {
+            "type": "boolean",
+            "description": "Разрешены ли комментарии для события. По умолчанию true.",
+            "default": true
           }
         },
         "description": "Новое событие"
@@ -2595,6 +3152,7 @@
         "properties": {
           "created": {
             "type": "string",
+            "format": "date-time",
             "description": "Дата и время создания заявки",
             "example": "2022-09-06T21:10:05.432"
           },
@@ -2677,6 +3235,7 @@
           },
           "eventDate": {
             "type": "string",
+            "format": "date-time",
             "description": "Новые дата и время на которые намечено событие. Дата и время указываются в формате \"yyyy-MM-dd HH:mm:ss\"",
             "example": "2023-10-11 23:10:05"
           },
@@ -2713,6 +3272,10 @@
             "type": "string",
             "description": "Новый заголовок",
             "example": "Сап прогулки по рекам и каналам"
+          },
+          "commentsEnabled": {
+            "type": "boolean",
+            "description": "Новое значение флага, разрешены ли комментарии для события."
           }
         },
         "description": "Данные для изменения информации о событии. Если поле в запросе не указано (равно null) - значит изменение этих данных не треубется."
@@ -2742,6 +3305,7 @@
           },
           "eventDate": {
             "type": "string",
+            "format": "date-time",
             "description": "Новые дата и время на которые намечено событие. Дата и время указываются в формате \"yyyy-MM-dd HH:mm:ss\"",
             "example": "2023-10-11 23:10:05"
           },
@@ -2779,6 +3343,10 @@
             "type": "string",
             "description": "Новый заголовок",
             "example": "Сап прогулки по рекам и каналам"
+          },
+          "commentsEnabled": {
+            "type": "boolean",
+            "description": "Новое значение флага, разрешены ли комментарии для события."
           }
         },
         "description": "Данные для изменения информации о событии. Если поле в запросе не указано (равно null) - значит изменение этих данных не треубется."
@@ -2830,6 +3398,80 @@
           }
         },
         "description": "Пользователь (краткая информация)"
+      },
+      "NewCommentDto": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст комментария",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "description": "Данные для создания нового комментария"
+      },
+      "UpdateCommentDto": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Новый текст комментария",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "description": "Данные для обновления комментария"
+      },
+      "CommentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Идентификатор комментария",
+            "readOnly": true
+          },
+          "text": {
+            "type": "string",
+            "description": "Текст комментария. Может содержать плейсхолдер, если комментарий удален."
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserShortDto"
+          },
+          "eventId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Идентификатор события, к которому относится комментарий"
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Дата и время создания комментария (в формате \"yyyy-MM-dd HH:mm:ss\")"
+          },
+          "updatedOn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Дата и время последнего обновления комментария (в формате \"yyyy-MM-dd HH:mm:ss\")",
+            "nullable": true
+          },
+          "isEdited": {
+            "type": "boolean",
+            "description": "Флаг, указывающий, был ли комментарий отредактирован"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "description": "Флаг, указывающий, удален ли комментарий (актуально для админских запросов)",
+            "default": false
+          }
+        },
+        "description": "Представление комментария"
       }
     }
   }

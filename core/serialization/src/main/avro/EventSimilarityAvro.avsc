@@ -1,0 +1,30 @@
+{
+  "namespace": "ru.practicum.ewm.stats.kafka",
+  "type": "record",
+  "name": "EventSimilarityAvro",
+  "fields": [
+    {
+      "name": "eventA",
+      "type": "long",
+      "doc": "Identifier for the first event in the pair (always the smaller ID)."
+    },
+    {
+      "name": "eventB",
+      "type": "long",
+      "doc": "Identifier for the second event in the pair (always the larger ID)."
+    },
+    {
+      "name": "score",
+      "type": "double",
+      "doc": "The calculated cosine similarity score between eventA and eventB."
+    },
+    {
+      "name": "timestamp",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      },
+      "doc": "The timestamp of the user action that triggered this recalculation."
+    }
+  ]
+}

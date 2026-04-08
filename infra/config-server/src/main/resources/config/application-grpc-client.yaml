@@ -1,0 +1,8 @@
+grpc:
+  client:
+    collector:
+      address: 'discovery:///collector'
+      negotiation-type: PLAINTEXT
+    analyzer:
+      address: 'discovery:///analyzer'
+      negotiation-type: PLAINTEXT

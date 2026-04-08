@@ -1,0 +1,154 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+          default-filters:
+            - name: Retry
+              args:
+                retries: 3
+                statuses:
+                  - SERVICE_UNAVAILABLE # 503
+                  - BAD_GATEWAY         # 502
+                  - GATEWAY_TIMEOUT     # 504
+                methods:
+                  - GET
+                backoff:
+                  firstBackoff: 25ms
+                  maxBackoff: 300ms
+                  factor: 2
+                  basedOnPreviousValue: false
+
+            - name: CircuitBreaker
+              args:
+                name: default-breaker
+                fallbackUri: forward:/service-fallback
+          routes:
+            # ===================================================================
+            # Routes for Request Service
+            # ===================================================================
+            - id: request-service-owner-api
+              uri: lb://request-service
+              predicates:
+                - Path=/users/{userId}/events/{eventId}/requests/**
+              order: 0
+
+            - id: request-service-user-api
+              uri: lb://request-service
+              predicates:
+                - Path=/users/{userId}/requests/**
+              order: 10 # Slightly less specific than the one above
+
+            # ===================================================================
+            # Routes for Comment Service
+            # ===================================================================
+            - id: comment-service-admin-api
+              uri: lb://comment-service
+              predicates:
+                - Path=/admin/comments/**
+              order: 20
+
+            - id: comment-service-user-api
+              uri: lb://comment-service
+              predicates:
+                - Path=/users/{userId}/comments/**
+              order: 30
+
+            - id: comment-service-public-api
+              uri: lb://comment-service
+              predicates:
+                - Path=/events/{eventId}/comments/**
+              order: 40
+
+            # ===================================================================
+            # Routes for User Service
+            # ===================================================================
+            - id: user-service-admin-api
+              uri: lb://user-service
+              predicates:
+                - Path=/admin/users/**
+              order: 100
+
+            # ===================================================================
+            # Routes for Event Service (The most general routes)
+            # ===================================================================
+            - id: event-service-admin-api
+              uri: lb://event-service
+              predicates:
+                - Path=/admin/**
+              order: 200
+
+            - id: event-service-private-api
+              uri: lb://event-service
+              predicates:
+                - Path=/users/**
+              order: 210
+
+            - id: event-service-public-events-api
+              uri: lb://event-service
+              predicates:
+                - Path=/events/**
+              order: 220
+
+            - id: event-service-public-categories-api
+              uri: lb://event-service
+              predicates:
+                - Path=/categories/**
+              order: 230
+
+            - id: event-service-public-compilations-api
+              uri: lb://event-service
+              predicates:
+                - Path=/compilations/**
+              order: 240
+    loadbalancer:
+      enabled: true
+      retry:
+        enabled: false # no retry cascades
+      cache:
+        enabled: true
+        ttl: 30s
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+
+    instances:
+      default-breaker:
+        baseConfig: default
+
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 4s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      probes:
+        enabled: true
+    gateway:
+      enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
