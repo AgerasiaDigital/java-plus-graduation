@@ -5,3 +5,4 @@ recommendations:
     LIKE: 1.0
   max-recent-events-for-prediction: 10
   max-neighbours-for-prediction: 10
+  max-user-events-for-similarity: 50

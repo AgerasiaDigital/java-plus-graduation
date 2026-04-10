@@ -120,7 +120,7 @@ services:
   # BUSINESS LOGIC SERVICES
   # ===================================================================
   collector-service:
-    build: core/collector
+    build: stats/collector
     container_name: ewm-collector-service
     depends_on:
       discovery-server:
@@ -135,7 +135,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
   aggregator-service:
-    build: core/aggregator
+    build: stats/aggregator
     container_name: ewm-aggregator-service
     depends_on:
       discovery-server:
@@ -150,7 +150,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
   analyzer-service:
-    build: core/analyzer
+    build: stats/analyzer
     container_name: ewm-analyzer-service
     depends_on:
       discovery-server:
