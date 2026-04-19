@@ -1,0 +1,4 @@
+server:
+  port: 0
+db:
+  name: ewm_comment

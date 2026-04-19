@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git mv:*)",
+      "Bash(git -C /c/Users/agerasiadigital/IdeaProjects/java-plus-graduation status --short)"
+    ],
+    "deny": []
+  }
+}

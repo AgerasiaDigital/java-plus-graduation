@@ -1,0 +1,24 @@
+server:
+  port: 0
+
+grpc:
+  server:
+    port: 0
+
+db:
+  name: ewm_stats_db
+
+spring:
+  kafka:
+    consumer:
+      group-id: analyzer-group
+      auto-offset-reset: earliest
+      properties:
+        fetch.min.bytes: 1
+        max.poll.records: 100
+        max.poll.interval.ms: 30000
+
+kafka:
+  topic:
+    user-actions: stats.user-actions.v1
+    events-similarity: stats.events-similarity.v1

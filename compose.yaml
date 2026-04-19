@@ -1,0 +1,249 @@
+services:
+  # ===================================================================
+  # INFRASTRUCTURE SERVICES
+  # ===================================================================
+  discovery-server:
+    build: infra/discovery-server
+    container_name: ewm-discovery-server
+    hostname: discovery-server
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_HOSTNAME: discovery-server
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  config-server:
+    build: infra/config-server
+    container_name: config-server
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    ports:
+      - "8888:8888"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8888/actuator/health | grep -q '\"eureka\":.*\"details\":{\"applications\":{\"CONFIG-SERVER\":1}}'" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      PORT: 8888
+
+  gateway-server:
+    build: infra/gateway-server
+    container_name: gateway-server
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      PORT: 8080
+
+  # ===================================================================
+  # KAFKA AND DATABASE
+  # ===================================================================
+  kafka:
+    image: confluentinc/confluent-local:7.4.10
+    hostname: kafka
+    container_name: ewm-kafka
+    ports:
+      - "9092:9092"
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-init-topics:
+    image: confluentinc/confluent-local:7.4.3
+    container_name: kafka-init-topics
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Waiting for Kafka to be ready...' &&
+        cub kafka-ready -b kafka:29092 1 20 &&
+        echo 'Kafka is ready!' &&
+        kafka-topics --create --topic stats.user-actions.v1 --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 &&
+        kafka-topics --create --topic stats.events-similarity.v1 --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092
+      "
+
+  ewm-db:
+    image: postgres:16.1
+    container_name: ewm-main-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ewm_user
+      POSTGRES_PASSWORD: ewm_password
+      POSTGRES_DB: ewm_db
+    volumes:
+      - main_db_data:/var/lib/postgresql/data
+      - ./init-scripts/init.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ===================================================================
+  # BUSINESS LOGIC SERVICES
+  # ===================================================================
+  collector-service:
+    build: stats/collector
+    container_name: ewm-collector-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+  aggregator-service:
+    build: stats/aggregator
+    container_name: ewm-aggregator-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+  analyzer-service:
+    build: stats/analyzer
+    container_name: ewm-analyzer-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      ewm-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      POSTGRES_HOST: ewm-db
+      POSTGRES_USER: ewm_user
+      POSTGRES_PASSWORD: ewm_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+  event-service:
+    build: core/event-service
+    container_name: ewm-event-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      ewm-db:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      POSTGRES_HOST: ewm-db
+      POSTGRES_USER: ewm_user
+      POSTGRES_PASSWORD: ewm_password
+      JAVA_OPTS: -Duser.timezone=UTC
+
+  user-service:
+    build: core/user-service
+    container_name: ewm-user-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      ewm-db:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      POSTGRES_HOST: ewm-db
+      POSTGRES_USER: ewm_user
+      POSTGRES_PASSWORD: ewm_password
+      JAVA_OPTS: -Duser.timezone=UTC
+
+  request-service:
+    build: core/request-service
+    container_name: ewm-request-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      ewm-db:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      POSTGRES_HOST: ewm-db
+      POSTGRES_USER: ewm_user
+      POSTGRES_PASSWORD: ewm_password
+      JAVA_OPTS: -Duser.timezone=UTC
+
+  comment-service:
+    build: core/comment-service
+    container_name: ewm-comment-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      ewm-db:
+        condition: service_healthy
+    ports:
+      - "8084:8084"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      POSTGRES_HOST: ewm-db
+      POSTGRES_USER: ewm_user
+      POSTGRES_PASSWORD: ewm_password
+      JAVA_OPTS: -Duser.timezone=UTC
+
+volumes:
+  main_db_data: { }

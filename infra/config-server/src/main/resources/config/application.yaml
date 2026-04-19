@@ -1,0 +1,38 @@
+spring:
+  cloud:
+    loadbalancer:
+      health-check:
+        enabled: true
+        interval: 2000
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      cache:
+        time-to-live: 1000
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+eureka:
+  instance:
+    health-check-url-path: /actuator/health/readiness
+    health-check-url-enabled: true
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+
+  client:
+    healthcheck:
+      enabled: false
+    registry-fetch-interval-seconds: 5
+    registration:
+      initialDelayPeriod: 500
